@@ -3,6 +3,7 @@
 void set_pixel(unsigned int x, unsigned int y, unsigned int color);
 void create_snake(unsigned int x, unsigned int y);
 void move_snake(unsigned int x, unsigned int y, unsigned int ant_x, unsigned int ant_y);
+void create_apple(unsigned int x, unsigned int y);
 
 void main(void)
 {
@@ -13,6 +14,8 @@ void main(void)
 
     unsigned int x = 17; // Coordenada inicial x
     unsigned int y = 12; // Coordenada inicial y
+    unsigned int apple_x = 10; // Coordenada inicial de la manzana
+    unsigned int apple_y = 8;  // Coordenada inicial de la manzana
 
     unsigned int ant_x = x; // Para guardar la pos anterior
     unsigned int ant_y = y;
@@ -22,7 +25,9 @@ void main(void)
     unsigned int key_left_pressed = 0;
     unsigned int key_right_pressed = 0;
 
+    //Crear serpiente y manzana
     create_snake(x, y);
+    create_apple(apple_x, apple_y);
 
     while (1)
     {
@@ -109,4 +114,13 @@ void move_snake(unsigned int x, unsigned int y, unsigned int ant_x, unsigned int
     set_pixel(x + 1, y, 0x00ff0000);     // Parte superior derecha
     set_pixel(x, y + 1, 0x00ff0000);     // Parte inferior izquierda
     set_pixel(x + 1, y + 1, 0x00ff0000); // Parte inferior derecha
+}
+
+void create_apple(unsigned int x, unsigned int y)
+{
+    // Dibujar manzana (2x2 en color verde)
+    set_pixel(x, y, 0x0000ff00); 
+    set_pixel(x + 1, y, 0x0000ff00); 
+    set_pixel(x, y + 1, 0x0000ff00); 
+    set_pixel(x + 1, y + 1, 0x0000ff00); 
 }
