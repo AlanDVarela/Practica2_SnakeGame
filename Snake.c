@@ -1,219 +1,204 @@
 #include "ripes_system.h"
 #include <stdio.h>
 #include <stdlib.h>
- 
-void set_pixel(unsigned int x, unsigned int y, unsigned int color);
-void create_snake(unsigned int x, unsigned int y);
-void move_snake(unsigned int x, unsigned int y, unsigned int ant_x, unsigned int ant_y);
-void create_apple(unsigned int x, unsigned int y);
- 
- 
-int check_collision_with_apple(unsigned int x, unsigned int y, unsigned int apple_x, unsigned int apple_y);
- 
- 
-void reset_game();
- 
+
 #define MATRIX_WIDTH 35
 #define MATRIX_HEIGHT 25
- 
-void main(void)
-{
-    //Posiciones iniciales
+#define MAX_SNAKE_LENGTH 20 // Longitud máxima de la serpiente
+
+// Variables globales para la serpiente
+unsigned int snake_length = 2; // Longitud inicial en bloques de 2x2
+unsigned int snake_x[MAX_SNAKE_LENGTH]; // Coordenadas X de cada segmento
+unsigned int snake_y[MAX_SNAKE_LENGTH]; // Coordenadas Y de cada segmento
+
+// Funciones
+void set_pixel(unsigned int x, unsigned int y, unsigned int color);
+void create_snake(unsigned int x, unsigned int y);
+void move_snake(unsigned int new_x, unsigned int new_y);
+void create_apple(unsigned int x, unsigned int y);
+void grow_snake();
+int check_collision_with_apple(unsigned int head_x, unsigned int head_y, unsigned int apple_x, unsigned int apple_y);
+void reset_game();
+
+void main(void) {
+    // Posiciones iniciales
     unsigned int x = rand() % (MATRIX_WIDTH - 2) + 1; // Coordenada aleatoria x
     unsigned int y = rand() % (MATRIX_HEIGHT - 2) + 1; // Coordenada aleatoria y
-    unsigned int apple_x = rand() % (MATRIX_WIDTH - 2) + 1; // Coordenada aleatoria de la manzana
-    unsigned int apple_y = rand() % (MATRIX_HEIGHT - 2) + 1;  // Coordenada aleatoria de la manzana
- 
-    unsigned int ant_x = x; // Para guardar la pos anterior
-    unsigned int ant_y = y;
-    
-     // Dirección de memoria del D-PAD y Switch reset
+    unsigned int apple_x = rand() % (MATRIX_WIDTH - 2) + 1; // Coordenada aleatoria manzana
+    unsigned int apple_y = rand() % (MATRIX_HEIGHT - 2) + 1; // Coordenada aleatoria manzana
+
+    // Dirección de memoria del D-PAD y Switch reset
     unsigned int *up = (unsigned int *)D_PAD_0_UP;
     unsigned int *down = (unsigned int *)D_PAD_0_DOWN;
     unsigned int *left = (unsigned int *)D_PAD_0_LEFT;
     unsigned int *right = (unsigned int *)D_PAD_0_RIGHT;
     unsigned int *reset = (unsigned int *)SWITCHES_0_BASE; // Switch reset
-    
+
     unsigned int key_up_pressed = 0;
     unsigned int key_down_pressed = 0;
     unsigned int key_left_pressed = 0;
     unsigned int key_right_pressed = 0;
-    
-    //Crear serpiente y manzana
+
+    // Crear serpiente inicial y manzana
     create_snake(x, y);
     create_apple(apple_x, apple_y);
- 
-   while (1) {
-        if (*reset == 1) { // Si el botón de reinicio es presionado
+
+    while (1) 
+    {
+        if (*reset == 1) 
+        { // Si el botón de reinicio es presionado
             reset_game();
         }
 
-        // Verificar si se presiona una tecla y si está dentro de los bordes
+        // Verificar entrada del D-PAD
         if (*up == 1 && key_up_pressed == 0) {
             key_up_pressed = 1;
-            if (y < MATRIX_HEIGHT - 2) { // Verificar borde superior
-                ant_x = x;
-                ant_y = y;
-                y += 1; // Mover hacia arriba
-                move_snake(x, y, ant_x, ant_y);
+            if (y < MATRIX_HEIGHT - 2) // Verificar borde superior
+            { 
+                y += 1;
+                move_snake(x, y);
             }
-        } else if (*down == 1 && key_down_pressed == 0) {
+        } 
+        else if (*down == 1 && key_down_pressed == 0) {
             key_down_pressed = 1;
-            if (y > 0) { // Verificar borde inferior
-                ant_x = x;
-                ant_y = y;
-                y -= 1; // Mover hacia abajo
-                move_snake(x, y, ant_x, ant_y);
+            if (y > 0) // Verificar borde inferior
+            { 
+                y -= 1;
+                move_snake(x, y);
             }
-        } else if (*left == 1 && key_left_pressed == 0) {
+        } else if (*left == 1 && key_left_pressed == 0)// Verificar borde izquierdo 
+        {
             key_left_pressed = 1;
-            if (x > 0) { // Verificar borde izquierdo
-                ant_x = x;
-                ant_y = y;
-                x -= 1; // Mover hacia la izquierda
-                move_snake(x, y, ant_x, ant_y);
+            if (x > 1) 
+            { 
+                x -= 2;
+                move_snake(x, y);
             }
-        } else if (*right == 1 && key_right_pressed == 0) {
+        } 
+        else if (*right == 1 && key_right_pressed == 0) 
+        {
             key_right_pressed = 1;
-            if (x < MATRIX_WIDTH - 2) { // Verificar borde derecho
-                ant_x = x;
-                ant_y = y;
-                x += 1; // Mover hacia la derecha
-                move_snake(x, y, ant_x, ant_y);
+            if (x < MATRIX_WIDTH - 2) // Verificar borde derecho
+            { 
+                x += 2;
+                move_snake(x, y);
             }
         }
 
         // Detectar colisión con la manzana
-        if (check_collision_with_apple(x, y, apple_x, apple_y)) {
-            apple_x = rand() % (MATRIX_WIDTH - 1);
-            apple_y = rand() % (MATRIX_HEIGHT - 1);
+        if (check_collision_with_apple(snake_x[0], snake_y[0], apple_x, apple_y)) 
+        {
+            grow_snake(); // Crecer la serpiente
+            apple_x = rand() % (MATRIX_WIDTH - 2) + 1; // Nueva manzana
+            apple_y = rand() % (MATRIX_HEIGHT - 2) + 1;
             create_apple(apple_x, apple_y);
         }
 
         // Liberar teclas
-        if (*up == 0) {
-            key_up_pressed = 0;
-        }
-        if (*down == 0) {
-            key_down_pressed = 0;
-        }
-        if (*left == 0) {
-            key_left_pressed = 0;
-        }
-        if (*right == 0) {
-            key_right_pressed = 0;
-        }
+        if (*up == 0) key_up_pressed = 0;
+        if (*down == 0) key_down_pressed = 0;
+        if (*left == 0) key_left_pressed = 0;
+        if (*right == 0) key_right_pressed = 0;
     }
 }
- 
-void set_pixel(unsigned int x, unsigned int y, unsigned int color)
+
+void set_pixel(unsigned int x, unsigned int y, unsigned int color) 
 {
     unsigned int *led_base = LED_MATRIX_0_BASE;
-    unsigned int offset = x + (MATRIX_HEIGHT - 1 - y) * LED_MATRIX_0_WIDTH; 
+    unsigned int offset = x + (MATRIX_HEIGHT - 1 - y) * LED_MATRIX_0_WIDTH;
     unsigned int *address = led_base + offset;
     *address = color;
 }
 
- 
-void create_snake(unsigned int x, unsigned int y)
+void create_snake(unsigned int x, unsigned int y) 
 {
-    // Dibujar la serpiente inicial
-    set_pixel(x, y, 0x00ff0000);
-    set_pixel(x + 1, y, 0x00ff0000);
-    set_pixel(x, y + 1, 0x00ff0000);
-    set_pixel(x + 1, y + 1, 0x00ff0000);
+    // Inicializar la serpiente
+    snake_length = 2;
+    snake_x[0] = x;
+    snake_y[0] = y;
+    snake_x[1] = x - 2; // Segmento inicial detrás de la cabeza
+    snake_y[1] = y;
+
+    // Dibujar la serpiente
+    for (unsigned int i = 0; i < snake_length; i++) 
+    {
+        set_pixel(snake_x[i], snake_y[i], 0x00ff0000);         // Esquina superior izquierda
+        set_pixel(snake_x[i] + 1, snake_y[i], 0x00ff0000);     // Esquina superior derecha
+        set_pixel(snake_x[i], snake_y[i] + 1, 0x00ff0000);     // Esquina inferior izquierda
+        set_pixel(snake_x[i] + 1, snake_y[i] + 1, 0x00ff0000); // Esquina inferior derecha
+    }
 }
- 
-void move_snake(unsigned int x, unsigned int y, unsigned int ant_x, unsigned int ant_y)
+
+void move_snake(unsigned int new_x, unsigned int new_y) 
 {
-    // Quitar area anterior serpiente
-    set_pixel(ant_x, ant_y, 0x00000000);         // Parte superior izquierda
-    set_pixel(ant_x + 1, ant_y, 0x00000000);     // Parte superior derecha
-    set_pixel(ant_x, ant_y + 1, 0x00000000);     // Parte inferior izquierda
-    set_pixel(ant_x + 1, ant_y + 1, 0x00000000); // Parte inferior derecha
- 
-    // Dibujar la nueva posición de la serpiente (2x2)
-    set_pixel(x, y, 0x00ff0000);         // Parte superior izquierda
-    set_pixel(x + 1, y, 0x00ff0000);     // Parte superior derecha
-    set_pixel(x, y + 1, 0x00ff0000);     // Parte inferior izquierda
-    set_pixel(x + 1, y + 1, 0x00ff0000); // Parte inferior derecha
+    // Borrar la cola de la serpiente
+    set_pixel(snake_x[snake_length - 1], snake_y[snake_length - 1], 0x00000000);
+    set_pixel(snake_x[snake_length - 1] + 1, snake_y[snake_length - 1], 0x00000000);
+    set_pixel(snake_x[snake_length - 1], snake_y[snake_length - 1] + 1, 0x00000000);
+    set_pixel(snake_x[snake_length - 1] + 1, snake_y[snake_length - 1] + 1, 0x00000000);
+
+    // Desplazar segmentos hacia adelante
+    for (unsigned int i = snake_length - 1; i > 0; i--) 
+    {
+        snake_x[i] = snake_x[i - 1];
+        snake_y[i] = snake_y[i - 1];
+    }
+
+    // Actualizar la cabeza
+    snake_x[0] = new_x;
+    snake_y[0] = new_y;
+
+    // Dibujar la nueva posición
+    for (unsigned int i = 0; i < snake_length; i++) 
+    {
+        set_pixel(snake_x[i], snake_y[i], 0x00ff0000);
+        set_pixel(snake_x[i] + 1, snake_y[i], 0x00ff0000);
+        set_pixel(snake_x[i], snake_y[i] + 1, 0x00ff0000);
+        set_pixel(snake_x[i] + 1, snake_y[i] + 1, 0x00ff0000);
+    }
 }
- 
-void create_apple(unsigned int x, unsigned int y)
+
+void create_apple(unsigned int x, unsigned int y) 
 {
-    
     // Dibujar manzana (2x2 en color verde)
     set_pixel(x, y, 0x0000ff00);
     set_pixel(x + 1, y, 0x0000ff00);
     set_pixel(x, y + 1, 0x0000ff00);
     set_pixel(x + 1, y + 1, 0x0000ff00);
 }
- 
-int check_collision_with_apple(unsigned int x, unsigned int y, unsigned int apple_x, unsigned int apple_y)
+
+void grow_snake() 
 {
-    int collision_detected = 0;
+    if (snake_length < MAX_SNAKE_LENGTH) 
+    {
+        unsigned int new_x = snake_x[snake_length - 1];
+        unsigned int new_y = snake_y[snake_length - 1];
 
-    // Verificamos todas las combinaciones de las coordenadas de la cabeza de la serpiente (4 puntos)
-    // con todas las combinaciones de las coordenadas de la manzana (4 puntos)
+        if (snake_x[snake_length - 2] < new_x) new_x += 2;
+        else if (snake_x[snake_length - 2] > new_x) new_x -= 2;
+        else if (snake_y[snake_length - 2] < new_y) new_y += 2;
+        else if (snake_y[snake_length - 2] > new_y) new_y -= 2;
 
-    // Esquinas de la serpiente (x, y, x+1, y+1)
-    // Esquinas de la manzana (apple_x, apple_y, apple_x+1, apple_y+1)
-
-    if ((x == apple_x && y == apple_y) || 
-    (x + 1 == apple_x && y == apple_y) || 
-    (x == apple_x && y + 1 == apple_y) || 
-    (x + 1 == apple_x && y + 1 == apple_y)) {
-    set_pixel(apple_x, apple_y, 0x00ff0000); // Cambiar a rojo (esquina superior izquierda)
-    set_pixel(apple_x + 1, apple_y, 0x00000000); // Cambiar a negro (esquina superior derecha)
-    set_pixel(apple_x, apple_y + 1, 0x00000000); // Cambiar a negro (esquina inferior izquierda)
-    set_pixel(apple_x + 1, apple_y + 1, 0x00000000); // Cambiar a negro (esquina inferior derecha)
-    collision_detected = 1;
+        snake_x[snake_length] = new_x;
+        snake_y[snake_length] = new_y;
+        snake_length++;
+    }
 }
 
-if ((x == apple_x + 1 && y == apple_y) || 
-    (x + 1 == apple_x + 1 && y == apple_y) || 
-    (x == apple_x + 1 && y + 1 == apple_y) || 
-    (x + 1 == apple_x + 1 && y + 1 == apple_y)) {
-    set_pixel(apple_x + 1, apple_y, 0x00ff0000); // Cambiar a rojo (esquina superior derecha)
-    set_pixel(apple_x, apple_y, 0x00000000); // Cambiar a negro (esquina superior izquierda)
-    set_pixel(apple_x + 1, apple_y + 1, 0x00000000); // Cambiar a negro (esquina inferior derecha)
-    set_pixel(apple_x, apple_y + 1, 0x00000000); // Cambiar a negro (esquina inferior izquierda)
-    collision_detected = 1;
+int check_collision_with_apple(unsigned int head_x, unsigned int head_y, unsigned int apple_x, unsigned int apple_y) {
+    return ((head_x == apple_x && head_y == apple_y) ||
+            (head_x + 1 == apple_x && head_y == apple_y) ||
+            (head_x == apple_x && head_y + 1 == apple_y) ||
+            (head_x + 1 == apple_x && head_y + 1 == apple_y));
 }
 
-if ((x == apple_x && y == apple_y + 1) || 
-    (x + 1 == apple_x && y == apple_y + 1) || 
-    (x == apple_x && y + 1 == apple_y + 1) || 
-    (x + 1 == apple_x && y + 1 == apple_y + 1)) {
-    set_pixel(apple_x, apple_y + 1, 0x00ff0000); // Cambiar a rojo (esquina inferior izquierda)
-    set_pixel(apple_x + 1, apple_y, 0x00000000); // Cambiar a negro (esquina superior derecha)
-    set_pixel(apple_x, apple_y, 0x00000000); // Cambiar a negro (esquina superior izquierda)
-    set_pixel(apple_x + 1, apple_y + 1, 0x00000000); // Cambiar a negro (esquina inferior derecha)
-    collision_detected = 1;
-}
-
-if ((x == apple_x + 1 && y == apple_y + 1) || 
-    (x + 1 == apple_x + 1 && y == apple_y + 1) || 
-    (x == apple_x + 1 && y + 1 == apple_y + 1) || 
-    (x + 1 == apple_x + 1 && y + 1 == apple_y + 1)) {
-    set_pixel(apple_x + 1, apple_y + 1, 0x00ff0000); // Cambiar a rojo (esquina inferior derecha)
-    set_pixel(apple_x, apple_y, 0x00000000); // Cambiar a negro (esquina superior izquierda)
-    set_pixel(apple_x + 1, apple_y, 0x00000000); // Cambiar a negro (esquina superior derecha)
-    set_pixel(apple_x, apple_y + 1, 0x00000000); // Cambiar a negro (esquina inferior izquierda)
-    collision_detected = 1;
-}
-
-    return collision_detected;
-}
-
-void reset_game(void)
-{
-    // Borrar toda la matriz LED
-    for (unsigned int i = 0; i < MATRIX_WIDTH; i++)
+void reset_game() {
+    for (unsigned int i = 0; i < MATRIX_WIDTH; i++) 
     {
         for (unsigned int j = 0; j < MATRIX_HEIGHT; j++)
-        {
-            set_pixel(i, j, 0x00000000); // Establecer todos los LEDs a negro
+         {
+            set_pixel(i, j, 0x00000000);//Borrar todos los pixeles(ponerlos en negro)
         }
     }
+   main(); // Reiniciar juego
 }
