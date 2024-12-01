@@ -57,7 +57,7 @@ void main(void) {
         // Verificar entrada del D-PAD
         if (*up == 1 && key_up_pressed == 0) {
             key_up_pressed = 1;
-            if (y < MATRIX_HEIGHT - 2) { // Movimiento hacia arriba
+            if (y < MATRIX_HEIGHT - 3) { // Movimiento hacia arriba
                 y += 2;
                 move_snake(x, y);
             }
@@ -78,7 +78,7 @@ void main(void) {
         } 
         else if (*right == 1 && key_right_pressed == 0) {
             key_right_pressed = 1;
-            if (x < MATRIX_WIDTH - 2) { // Movimiento hacia la derecha
+            if (x < MATRIX_WIDTH - 3) { // Movimiento hacia la derecha
                 x += 2;
                 move_snake(x, y);
             }
