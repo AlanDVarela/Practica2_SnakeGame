@@ -43,85 +43,77 @@ void main(void)
     create_snake(x, y);
     create_apple(apple_x, apple_y);
  
-    while (1)
-    {
-         if (*reset == 1) // Si el botón de reinicio es presionado
-        {
-            // Esperar hasta que el botón se libere para evitar reinicios repetidos
-            while (*reset == 1) {
-                // Esperamos a que el botón de reinicio se libere antes de continuar
-            }
-        }  
-        
-        
-        if (*up == 1 && key_up_pressed == 0)
-        {
+   while (1) {
+        if (*reset == 1) { // Si el botón de reinicio es presionado
+            reset_game();
+        }
+
+        // Verificar si se presiona una tecla y si está dentro de los bordes
+        if (*up == 1 && key_up_pressed == 0) {
             key_up_pressed = 1;
-            ant_x = x;
-            ant_y = y;
-            y -= 1;    // Mover hacia arriba
-            move_snake(x, y, ant_x, ant_y);
-        }
-        else if (*down == 1 && key_down_pressed == 0)
-        {
+            if (y < MATRIX_HEIGHT - 2) { // Verificar borde superior
+                ant_x = x;
+                ant_y = y;
+                y += 1; // Mover hacia arriba
+                move_snake(x, y, ant_x, ant_y);
+            }
+        } else if (*down == 1 && key_down_pressed == 0) {
             key_down_pressed = 1;
-            ant_x = x;
-            ant_y = y;
-            y += 1; // Mover hacia abajo
-            move_snake(x, y, ant_x, ant_y);
-        }
-        else if (*left == 1 && key_left_pressed == 0)
-        {
+            if (y > 0) { // Verificar borde inferior
+                ant_x = x;
+                ant_y = y;
+                y -= 1; // Mover hacia abajo
+                move_snake(x, y, ant_x, ant_y);
+            }
+        } else if (*left == 1 && key_left_pressed == 0) {
             key_left_pressed = 1;
-            ant_x = x;
-            ant_y = y;
-            x -= 1; // Mover hacia la izquierda
-            move_snake(x, y, ant_x, ant_y);
-        }
-        else if (*right == 1 && key_right_pressed == 0)
-        {
+            if (x > 0) { // Verificar borde izquierdo
+                ant_x = x;
+                ant_y = y;
+                x -= 1; // Mover hacia la izquierda
+                move_snake(x, y, ant_x, ant_y);
+            }
+        } else if (*right == 1 && key_right_pressed == 0) {
             key_right_pressed = 1;
-            ant_x = x;
-            ant_y = y;
-            x += 1; // Mover hacia la derecha
-            move_snake(x, y, ant_x, ant_y);
+            if (x < MATRIX_WIDTH - 2) { // Verificar borde derecho
+                ant_x = x;
+                ant_y = y;
+                x += 1; // Mover hacia la derecha
+                move_snake(x, y, ant_x, ant_y);
+            }
         }
-        
+
         // Detectar colisión con la manzana
-        if (check_collision_with_apple(x, y, apple_x, apple_y))
-        {
+        if (check_collision_with_apple(x, y, apple_x, apple_y)) {
             apple_x = rand() % (MATRIX_WIDTH - 1);
             apple_y = rand() % (MATRIX_HEIGHT - 1);
-    
             create_apple(apple_x, apple_y);
-        } 
+        }
+
         // Liberar teclas
-        if (*up == 0)
-        {
+        if (*up == 0) {
             key_up_pressed = 0;
         }
-        if (*down == 0)
-        {
+        if (*down == 0) {
             key_down_pressed = 0;
         }
-        if (*left == 0)
-        {
+        if (*left == 0) {
             key_left_pressed = 0;
         }
-        if (*right == 0)
-        {
+        if (*right == 0) {
             key_right_pressed = 0;
-        }     
-    } // while
+        }
+    }
 }
  
 void set_pixel(unsigned int x, unsigned int y, unsigned int color)
 {
     unsigned int *led_base = LED_MATRIX_0_BASE;
-    unsigned int offset = x + y * LED_MATRIX_0_WIDTH;
+    unsigned int offset = x + (MATRIX_HEIGHT - 1 - y) * LED_MATRIX_0_WIDTH; 
     unsigned int *address = led_base + offset;
     *address = color;
 }
+
  
 void create_snake(unsigned int x, unsigned int y)
 {
