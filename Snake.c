@@ -1,3 +1,11 @@
+/*
+Alan Varela
+30 - Nov - 2024
+Practica 2 - Juego Snake
+
+*/
+
+
 #include "ripes_system.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -22,6 +30,7 @@ void move_snake(unsigned int new_x, unsigned int new_y);
 void create_apple();
 void grow_snake();
 int check_collision_with_apple(unsigned int head_x, unsigned int head_y, unsigned int apple_x, unsigned int apple_y);
+int check_self_collision();
 void reset_game();
 
 void main(void) {
@@ -84,11 +93,16 @@ void main(void) {
             }
         }
 
-        // Detectar colisión con la manzana
+        // Detectar colision con la manzana
         if (check_collision_with_apple(snake_x[0], snake_y[0], apple_x, apple_y)) 
         {
             grow_snake(); // Crecer la serpiente
             create_apple(); // Crear nueva manzana
+        }
+
+        // Detectar colision consigo mismo
+        if (check_self_collision()) {
+            reset_game(); // Reiniciar el juego si se toca a si mismo
         }
 
         // Liberar teclas
@@ -151,14 +165,17 @@ void create_apple()
     // Generar nueva posición de la manzana
     int valid_position = 0;
 
-    while (!valid_position) {
+    while (!valid_position) 
+    {
         valid_position = 1;
         apple_x = rand() % (MATRIX_WIDTH / 2) * 2;
         apple_y = rand() % (MATRIX_HEIGHT / 2) * 2;
 
         // Verificar que la manzana no se superponga con la serpiente
-        for (unsigned int i = 0; i < snake_length; i++) {
-            if (check_collision_with_apple(snake_x[i], snake_y[i], apple_x, apple_y)) {
+        for (unsigned int i = 0; i < snake_length; i++) 
+        {
+            if (check_collision_with_apple(snake_x[i], snake_y[i], apple_x, apple_y))
+             {
                 valid_position = 0;
                 break;
             }
@@ -199,10 +216,22 @@ int check_collision_with_apple(unsigned int x, unsigned int y, unsigned int appl
             (x + 1 == apple_x && y + 1 == apple_y));
 }
 
+int check_self_collision() {
+    for (unsigned int i = 1; i < snake_length; i++) 
+    {
+        if (snake_x[0] == snake_x[i] && snake_y[0] == snake_y[i]) 
+        {
+            return 1; // Se toco a sí misma
+        }
+    }
+    return 0;
+}
+
 void reset_game() {
     for (unsigned int i = 0; i < MATRIX_WIDTH; i++) 
     {
-        for (unsigned int j = 0; j < MATRIX_HEIGHT; j++) {
+        for (unsigned int j = 0; j < MATRIX_HEIGHT; j++) 
+        {
             set_pixel(i, j, 0x00000000); // Borrar toda la matriz
         }
     }
